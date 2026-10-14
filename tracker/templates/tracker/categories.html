@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+{% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="categories-card">
+
+    <h2>Categories</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <input
+            type="text"
+            name="name"
+            placeholder="Category name"
+            required
+        >
+
+        <button type="submit">Add Category</button>
+    </form>
+
+
+    <div class="category-list">
+
+        {% for category in categories %}
+
+            <div class="category-item">
+
+                <span>{{ category.name }}</span>
+
+                <a
+                    class="delete-btn"
+                    href="{% url 'delete_category' category.id %}">
+                    Delete
+                </a>
+
+            </div>
+
+        {% empty %}
+
+            <p>No categories added yet.</p>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}
+</body>
+</html>

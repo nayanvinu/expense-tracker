@@ -1,0 +1,363 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="savings-page">
+
+    <!-- PAGE HEADER -->
+    <div class="savings-header">
+        <h1>Savings Goals</h1>
+        <p>Plan, save, and reach the things that matter to you.</p>
+    </div>
+
+
+    <!-- CREATE GOAL -->
+    <div class="savings-create-card">
+
+        <div class="savings-create-header">
+            <span class="savings-eyebrow">PLAN YOUR FUTURE</span>
+
+            <h2>Create a Savings Goal</h2>
+
+            <p>Set a target and track your progress over time.</p>
+        </div>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <div class="savings-form-grid">
+
+                <div class="savings-field">
+                    <label for="name">
+                        Goal Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="e.g. New Bike"
+                        maxlength="100"
+                        required
+                    >
+                </div>
+
+
+                <div class="savings-field">
+                    <label for="target_amount">
+                        Target Amount
+                    </label>
+
+                    <div class="money-input">
+                        <span>₹</span>
+
+                        <input
+                            type="number"
+                            id="target_amount"
+                            name="target_amount"
+                            placeholder="0.00"
+                            min="0.01"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+                </div>
+
+
+                <div class="savings-field">
+                    <label for="saved_amount">
+                        Already Saved
+                        <span>(optional)</span>
+                    </label>
+
+                    <div class="money-input">
+                        <span>₹</span>
+
+                        <input
+                            type="number"
+                            id="saved_amount"
+                            name="saved_amount"
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                        >
+                    </div>
+                </div>
+
+
+                <div class="savings-field">
+                    <label for="target_date">
+                        Target Date
+                        <span>(optional)</span>
+                    </label>
+
+                    <input
+                        type="date"
+                        id="target_date"
+                        name="target_date"
+                    >
+                </div>
+
+            </div>
+
+
+            <div class="savings-form-action">
+                <button
+                    type="submit"
+                    class="create-goal-btn"
+                >
+                    + Create Goal
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- YOUR GOALS -->
+    <div class="savings-goals-container">
+
+        <div class="savings-section-header">
+
+            <h2>Your Goals</h2>
+
+            <p>
+                Track your progress towards your financial goals.
+            </p>
+
+        </div>
+
+
+        {% if goal_data %}
+
+        <div class="savings-goals-grid">
+
+            {% for item in goal_data %}
+
+            <div class="goal-card">
+
+                <!-- GOAL HEADER -->
+                <div class="goal-card-header">
+
+                    <div class="goal-title">
+
+                        <div class="goal-icon">
+                            🎯
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                {{ item.goal.name }}
+                            </h3>
+
+                            {% if item.goal.target_date %}
+
+                            <span>
+                                Target:
+                                {{ item.goal.target_date|date:"d M Y" }}
+                            </span>
+
+                            {% else %}
+
+                            <span>
+                                No target date
+                            </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    {% if item.completed %}
+
+                    <span class="goal-completed">
+                        ✓ Completed
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- AMOUNTS -->
+                <div class="goal-amounts">
+
+                    <div>
+                        <span>Saved</span>
+
+                        <strong>
+                            ₹{{ item.goal.saved_amount|floatformat:2 }}
+                        </strong>
+                    </div>
+
+
+                    <div>
+                        <span>Target</span>
+
+                        <strong>
+                            ₹{{ item.goal.target_amount|floatformat:2 }}
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <!-- PROGRESS BAR -->
+                <div class="goal-progress">
+
+                    <div
+                        class="goal-progress-bar {% if item.completed %}progress-complete{% endif %}"
+                        data-progress="{{ item.percentage }}"
+                    ></div>
+
+                </div>
+
+
+                <!-- PROGRESS DETAILS -->
+                <div class="goal-progress-details">
+
+                    <strong>
+                        {{ item.percentage }}%
+                    </strong>
+
+
+                    {% if item.completed %}
+
+                    <span>
+                        Goal completed!
+                    </span>
+
+                    {% else %}
+
+                    <span>
+                        ₹{{ item.remaining|floatformat:2 }} remaining
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                {% if not item.completed %}
+
+                <!-- ACTIONS -->
+                <div class="goal-actions">
+
+                    <!-- ADD SAVINGS -->
+                    <form
+                        method="POST"
+                        action="{% url 'add_savings' item.goal.id %}"
+                        class="add-savings-form"
+                    >
+
+                        {% csrf_token %}
+
+                        <div class="money-input small">
+
+                            <span>₹</span>
+
+                            <input
+                                type="number"
+                                name="amount"
+                                placeholder="Add savings"
+                                min="0.01"
+                                step="0.01"
+                                required
+                            >
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="add-savings-btn"
+                        >
+                            Add Savings
+                        </button>
+
+                    </form>
+
+
+                    <!-- DELETE -->
+                    <form
+                        method="POST"
+                        action="{% url 'delete_savings_goal' item.goal.id %}"
+                    >
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="delete-goal-btn"
+                            onclick="return confirm('Are you sure you want to delete this goal?');"
+                        >
+                            Delete
+                        </button>
+
+                    </form>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        {% else %}
+
+        <!-- EMPTY STATE -->
+        <div class="savings-empty">
+
+            <div class="empty-icon">
+                🎯
+            </div>
+
+            <h3>
+                No savings goals yet
+            </h3>
+
+            <p>
+                Create your first savings goal and start working
+                towards something you really want.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- PROGRESS BAR SCRIPT -->
+<script>
+
+    const progressBars = document.querySelectorAll(
+        ".goal-progress-bar"
+    );
+
+    progressBars.forEach(function (bar) {
+
+        const progress =
+            parseFloat(bar.dataset.progress) || 0;
+
+        bar.style.width =
+            Math.min(progress, 100) + "%";
+
+    });
+
+</script>
+
+{% endblock %}

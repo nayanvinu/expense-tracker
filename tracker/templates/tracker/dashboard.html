@@ -1,0 +1,1013 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="dashboard-page">
+
+    <!-- ===================================== -->
+    <!-- HEADER -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-header">
+
+        <div>
+            <h1>
+                Welcome back, {{ request.user.username }}
+            </h1>
+
+            <p>
+                Here’s an overview of your finances.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'add_transaction' %}"
+            class="primary-action"
+        >
+            + Add Transaction
+        </a>
+
+        <a
+        href="{% url 'calculator' %}"
+        class="quick-add-action">
+        🧮 Quick Add
+        </a>
+
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- SUMMARY CARDS -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-summary-grid">
+
+        <!-- BALANCE -->
+
+        <div class="dashboard-summary-card">
+
+            <div class="summary-card-top">
+
+                <span class="summary-label">
+                    Total Balance
+                </span>
+
+                <span class="summary-icon">
+                    ₹
+                </span>
+
+            </div>
+
+            <h2>
+                ₹{{ balance|floatformat:2 }}
+            </h2>
+
+            <p>
+                Current available balance
+            </p>
+
+        </div>
+
+
+        <!-- INCOME -->
+
+        <div class="dashboard-summary-card">
+
+            <div class="summary-card-top">
+
+                <span class="summary-label">
+                    Total Income
+                </span>
+
+                <span class="summary-icon income-icon">
+                    ↑
+                </span>
+
+            </div>
+
+            <h2>
+                ₹{{ credit|floatformat:2 }}
+            </h2>
+
+            <p>
+                Total credited amount
+            </p>
+
+        </div>
+
+
+        <!-- EXPENSES -->
+
+        <div class="dashboard-summary-card">
+
+            <div class="summary-card-top">
+
+                <span class="summary-label">
+                    Total Expenses
+                </span>
+
+                <span class="summary-icon expense-icon">
+                    ↓
+                </span>
+
+            </div>
+
+            <h2>
+                ₹{{ debit|floatformat:2 }}
+            </h2>
+
+            <p>
+                Total spending
+            </p>
+
+        </div>
+
+
+        <!-- MONTHLY SAVINGS -->
+
+        <div class="dashboard-summary-card">
+
+            <div class="summary-card-top">
+
+                <span class="summary-label">
+                    Monthly Savings
+                </span>
+
+                <span class="summary-icon">
+                    ✓
+                </span>
+
+            </div>
+
+            <h2>
+                ₹{{ monthly_savings|floatformat:2 }}
+            </h2>
+
+            <p>
+                Savings this month
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- THIS MONTH -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <h2>
+                    This Month
+                </h2>
+
+                <p>
+                    Your current monthly financial activity
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="monthly-overview-grid">
+
+            <!-- MONTHLY INCOME -->
+
+            <div class="monthly-card">
+
+                <span>
+                    Income
+                </span>
+
+                <strong>
+                    ₹{{ monthly_income|floatformat:2 }}
+                </strong>
+
+            </div>
+
+
+            <!-- MONTHLY EXPENSES -->
+
+            <div class="monthly-card">
+
+                <span>
+                    Expenses
+                </span>
+
+                <strong>
+                    ₹{{ monthly_expenses|floatformat:2 }}
+                </strong>
+
+            </div>
+
+
+            <!-- MONTHLY SAVINGS -->
+
+            <div class="monthly-card">
+
+                <span>
+                    Savings
+                </span>
+
+                <strong>
+                    ₹{{ monthly_savings|floatformat:2 }}
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- CHARTS -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-charts-grid">
+
+
+        <!-- INCOME VS EXPENSES -->
+
+        <div class="dashboard-chart-card">
+
+            <div class="chart-card-header">
+
+                <h2>
+                    Income vs Expenses
+                </h2>
+
+                <p>
+                    Overall financial activity
+                </p>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="incomeExpenseChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- EXPENSE BY CATEGORY -->
+
+        <div class="dashboard-chart-card">
+
+            <div class="chart-card-header">
+
+                <h2>
+                    Expenses by Category
+                </h2>
+
+                <p>
+                    Where your money goes
+                </p>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="categoryChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- BUDGET + LOANS -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-two-column">
+
+
+        <!-- ================================= -->
+        <!-- BUDGET -->
+        <!-- ================================= -->
+
+        <div class="dashboard-info-card">
+
+            <div class="info-card-header">
+
+                <div>
+
+                    <h2>
+                        Monthly Budget
+                    </h2>
+
+                    <p>
+                        Your current month budget
+                    </p>
+
+                </div>
+
+                <a
+                    href="{% url 'budget' %}"
+                    class="small-action"
+                >
+                    Manage
+                </a>
+
+            </div>
+
+
+            {% if current_budget %}
+
+                <div class="budget-dashboard-amount">
+
+                    <div>
+
+                        <span>
+                            Spent
+                        </span>
+
+                        <strong>
+                            ₹{{ monthly_expenses|floatformat:2 }}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Budget
+                        </span>
+
+                        <strong>
+                            ₹{{ budget_amount|floatformat:2 }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BUDGET PROGRESS -->
+
+                <div class="dashboard-progress">
+
+                   <div
+    class="dashboard-progress-bar"
+    data-progress="{{ budget_progress }}"
+></div>
+
+                </div>
+
+
+                <div class="budget-dashboard-footer">
+
+                    {% if budget_over %}
+
+                        <span class="dashboard-warning">
+
+                            Over budget by
+                            ₹{{ budget_over_amount|floatformat:2 }}
+
+                        </span>
+
+                    {% else %}
+
+                        <span>
+
+                            ₹{{ budget_remaining|floatformat:2 }}
+                            remaining
+
+                        </span>
+
+                    {% endif %}
+
+
+                    <strong>
+                        {{ budget_percentage }}%
+                    </strong>
+
+                </div>
+
+
+            {% else %}
+
+                <div class="dashboard-empty">
+
+                    <span>
+                        No budget set for this month.
+                    </span>
+
+                    <a href="{% url 'budget' %}">
+                        Set Budget
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- LOANS -->
+        <!-- ================================= -->
+
+        <div class="dashboard-info-card">
+
+            <div class="info-card-header">
+
+                <div>
+
+                    <h2>
+                        Loans
+                    </h2>
+
+                    <p>
+                        Pending loan overview
+                    </p>
+
+                </div>
+
+                <a
+                    href="{% url 'loans' %}"
+                    class="small-action"
+                >
+                    View All
+                </a>
+
+            </div>
+
+
+            <div class="loan-dashboard-stats">
+
+
+                <!-- PENDING -->
+
+                <div>
+
+                    <span>
+                        Pending
+                    </span>
+
+                    <strong>
+                        ₹{{ pending_loan_amount|floatformat:2 }}
+                    </strong>
+
+                    <small>
+                        {{ pending_loan_count }}
+                        pending record{{ pending_loan_count|pluralize }}
+                    </small>
+
+                </div>
+
+
+                <!-- OVERDUE -->
+
+                <div>
+
+                    <span>
+                        Overdue
+                    </span>
+
+                    <strong class="overdue-dashboard">
+                        ₹{{ overdue_loan_amount|floatformat:2 }}
+                    </strong>
+
+                    <small>
+                        {{ overdue_loan_count }}
+                        overdue record{{ overdue_loan_count|pluralize }}
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            {% if overdue_loan_count > 0 %}
+
+                <div class="dashboard-alert">
+
+                    ⚠
+
+                    You have
+                    {{ overdue_loan_count }}
+                    overdue loan{{ overdue_loan_count|pluralize }}.
+
+                    <a href="{% url 'loans' %}?filter=OVERDUE">
+                        Review
+                    </a>
+
+                </div>
+
+            {% else %}
+
+                <div class="dashboard-success">
+
+                    ✓
+                    No overdue loans.
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- SAVINGS GOALS -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <h2>
+                    Savings Goals
+                </h2>
+
+                <p>
+                    Track your progress
+                </p>
+
+            </div>
+
+            <a
+                href="{% url 'savings_goals' %}"
+                class="small-action"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        {% if savings_goal_data %}
+
+            <div class="dashboard-goals-grid">
+
+                {% for item in savings_goal_data %}
+
+                    <div class="dashboard-goal-card">
+
+                        <div class="goal-dashboard-top">
+
+                            <div>
+
+                                <h3>
+                                    {{ item.goal.name }}
+                                </h3>
+
+                                {% if item.goal.target_date %}
+
+                                    <span>
+                                        Target:
+                                        {{ item.goal.target_date|date:"d M Y" }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <strong>
+                                {{ item.percentage }}%
+                            </strong>
+
+                        </div>
+
+
+                        <!-- GOAL PROGRESS -->
+
+                        <div class="dashboard-progress">
+
+                           <div
+    class="dashboard-progress-bar"
+    data-progress="{{ item.percentage }}"
+></div>
+
+                        </div>
+
+
+                        <div class="goal-dashboard-bottom">
+
+                            <span>
+                                ₹{{ item.goal.saved_amount|floatformat:2 }}
+                                saved
+                            </span>
+
+
+                            {% if item.completed %}
+
+                                <strong class="goal-complete">
+                                    Completed
+                                </strong>
+
+                            {% else %}
+
+                                <span>
+                                    ₹{{ item.remaining|floatformat:2 }}
+                                    remaining
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+        {% else %}
+
+            <div class="dashboard-empty-card">
+
+                <p>
+                    You haven't created any savings goals yet.
+                </p>
+
+                <a href="{% url 'savings_goals' %}">
+                    Create Savings Goal
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- RECENT TRANSACTIONS -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <h2>
+                    Recent Transactions
+                </h2>
+
+                <p>
+                    Your latest financial activity
+                </p>
+
+            </div>
+
+            <a
+                href="{% url 'transactions' %}"
+                class="small-action"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        {% if recent_transactions %}
+
+            <div class="recent-transactions">
+
+                {% for transaction in recent_transactions %}
+
+                    <div class="recent-transaction-row">
+
+
+                        <!-- ICON -->
+
+                        <div class="recent-transaction-icon">
+
+                            {% if transaction.transaction_type == 'CREDIT' %}
+
+                                ↑
+
+                            {% else %}
+
+                                ↓
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- TRANSACTION DETAILS -->
+
+                        <div class="recent-transaction-main">
+
+                            <strong>
+                                {{ transaction.category.name }}
+                            </strong>
+
+                            <span>
+                                {{ transaction.description|default:"No description" }}
+                            </span>
+
+                        </div>
+
+
+                        <!-- DATE -->
+
+                        <div class="recent-transaction-date">
+
+                            {{ transaction.date|date:"d M Y" }}
+
+                        </div>
+
+
+                        <!-- AMOUNT -->
+
+                        <div
+                            class="
+                                recent-transaction-amount
+                                {% if transaction.transaction_type == 'CREDIT' %}
+                                    transaction-credit
+                                {% else %}
+                                    transaction-debit
+                                {% endif %}
+                            "
+                        >
+
+                            {% if transaction.transaction_type == 'CREDIT' %}
+
+                                +
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                            ₹{{ transaction.amount|floatformat:2 }}
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+        {% else %}
+
+            <div class="dashboard-empty-card">
+
+                <p>
+                    No transactions yet.
+                </p>
+
+                <a href="{% url 'add_transaction' %}">
+                    Add Your First Transaction
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+</div>
+
+
+<!-- ===================================== -->
+<!-- CHART.JS -->
+<!-- ===================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+{{ chart_data|json_script:"chart-data" }}
+
+{{ category_labels|json_script:"category-labels" }}
+
+{{ category_amounts|json_script:"category-amounts" }}
+
+
+<script>
+
+    /* =====================================
+       GET CHART DATA
+    ===================================== */
+
+    const chartData = JSON.parse(
+        document.getElementById(
+            'chart-data'
+        ).textContent
+    );
+
+
+    const categoryLabels = JSON.parse(
+        document.getElementById(
+            'category-labels'
+        ).textContent
+    );
+
+
+    const categoryAmounts = JSON.parse(
+        document.getElementById(
+            'category-amounts'
+        ).textContent
+    );
+
+
+    /* =====================================
+       INCOME VS EXPENSES
+    ===================================== */
+
+    const incomeExpenseCanvas =
+        document.getElementById(
+            'incomeExpenseChart'
+        );
+
+
+    if (incomeExpenseCanvas) {
+
+        new Chart(
+            incomeExpenseCanvas,
+            {
+
+                type: 'bar',
+
+                data: {
+
+                    labels: chartData.labels,
+
+                   datasets: [
+    {
+        label: 'Amount',
+        data: chartData.values,
+        backgroundColor: [
+            '#8fb5a3',
+            '#d6a18d'
+        ],
+        borderRadius: 7,
+        borderWidth: 0
+    }
+]
+
+                },
+
+                options: {
+    responsive: true,
+    maintainAspectRatio: false,
+
+    scales: {
+        y: {
+            beginAtZero: true,
+            grid: {
+                color: '#edf0ed'
+            },
+            ticks: {
+                font: {
+                    size: 10
+                }
+            }
+        },
+
+        x: {
+            grid: {
+                display: false
+            },
+            ticks: {
+                font: {
+                    size: 10
+                }
+            }
+        }
+    },
+
+    plugins: {
+        legend: {
+            display: false
+        }
+    }
+}
+
+            }
+        );
+
+    }
+
+
+    /* =====================================
+       EXPENSE BY CATEGORY
+    ===================================== */
+
+    const categoryCanvas =
+        document.getElementById(
+            'categoryChart'
+        );
+
+
+    if (categoryCanvas) {
+
+        new Chart(
+            categoryCanvas,
+            {
+
+                type: 'doughnut',
+
+                data: {
+    labels: categoryLabels,
+
+    datasets: [
+        {
+            label: 'Expenses',
+            data: categoryAmounts,
+
+            backgroundColor: [
+                '#8fb5a3',
+                '#d6a18d',
+                '#b7c9be',
+                '#c9b8a8',
+                '#9fb7aa',
+                '#d9c8b9',
+                '#7fa18e',
+                '#bfae9f'
+            ],
+
+            borderWidth: 0
+        }
+    ]
+},
+
+                options: {
+    responsive: true,
+    maintainAspectRatio: false,
+
+    cutout: '68%',
+
+    plugins: {
+        legend: {
+            position: 'bottom',
+
+            labels: {
+                usePointStyle: true,
+                padding: 18,
+
+                font: {
+                    size: 11
+                }
+            }
+        }
+    }
+}
+
+            }
+        );
+
+    }
+
+
+
+
+    /* =====================================
+       YOUR EXISTING CHART CODE
+    ===================================== */
+
+    // ... your existing Chart.js code ...
+
+
+    /* =====================================
+       PROGRESS BARS
+    ===================================== */
+
+    document.querySelectorAll(
+        '.dashboard-progress-bar'
+    ).forEach(function (bar) {
+
+        let progress = parseFloat(
+            bar.dataset.progress
+        ) || 0;
+
+        progress = Math.min(
+            Math.max(progress, 0),
+            100
+        );
+
+        bar.style.width = progress + '%';
+
+    });
+
+
+
+</script>
+
+{% endblock %}

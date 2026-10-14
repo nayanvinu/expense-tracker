@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+   {% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="form-card">
+
+    <div class="form-header">
+        <h2>Edit Transaction</h2>
+        <p>Update the details of your transaction.</p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <label>Category</label>
+
+        <select name="category" required>
+            {% for category in categories %}
+                <option
+                    value="{{ category.id }}"
+                    {% if category.id == transaction.category.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ category.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+
+        <label>Amount</label>
+
+        <input
+            type="number"
+            name="amount"
+            step="0.01"
+            min="0"
+            value="{{ transaction.amount }}"
+            required
+        >
+
+
+        <label>Transaction Type</label>
+
+        <select name="transaction_type" required>
+
+            <option
+                value="CREDIT"
+                {% if transaction.transaction_type == "CREDIT" %}
+                    selected
+                {% endif %}
+            >
+                Credit
+            </option>
+
+            <option
+                value="DEBIT"
+                {% if transaction.transaction_type == "DEBIT" %}
+                    selected
+                {% endif %}
+            >
+                Debit
+            </option>
+
+        </select>
+
+
+        <label>Description</label>
+
+        <input
+            type="text"
+            name="description"
+            value="{{ transaction.description }}"
+            placeholder="What was this transaction for?"
+        >
+
+
+        <label>Date</label>
+
+        <input
+            type="date"
+            name="date"
+            value="{{ transaction.date|date:'Y-m-d' }}"
+            required
+        >
+
+
+        <button type="submit">
+            Update Transaction
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}
+</body>
+</html>

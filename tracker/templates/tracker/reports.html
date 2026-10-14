@@ -1,0 +1,567 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Financial Reports</h1>
+        <p>Analyze your income, expenses, and savings.</p>
+    </div>
+</div>
+
+
+<!-- ========================= -->
+<!-- FILTER -->
+<!-- ========================= -->
+
+<form method="GET" class="report-filter">
+
+    <div class="filter-group">
+
+        <label for="month">Month</label>
+
+        <select name="month" id="month">
+
+            <option value="">All Months</option>
+
+            <option value="1"
+                {% if selected_month == "1" %}selected{% endif %}>
+                January
+            </option>
+
+            <option value="2"
+                {% if selected_month == "2" %}selected{% endif %}>
+                February
+            </option>
+
+            <option value="3"
+                {% if selected_month == "3" %}selected{% endif %}>
+                March
+            </option>
+
+            <option value="4"
+                {% if selected_month == "4" %}selected{% endif %}>
+                April
+            </option>
+
+            <option value="5"
+                {% if selected_month == "5" %}selected{% endif %}>
+                May
+            </option>
+
+            <option value="6"
+                {% if selected_month == "6" %}selected{% endif %}>
+                June
+            </option>
+
+            <option value="7"
+                {% if selected_month == "7" %}selected{% endif %}>
+                July
+            </option>
+
+            <option value="8"
+                {% if selected_month == "8" %}selected{% endif %}>
+                August
+            </option>
+
+            <option value="9"
+                {% if selected_month == "9" %}selected{% endif %}>
+                September
+            </option>
+
+            <option value="10"
+                {% if selected_month == "10" %}selected{% endif %}>
+                October
+            </option>
+
+            <option value="11"
+                {% if selected_month == "11" %}selected{% endif %}>
+                November
+            </option>
+
+            <option value="12"
+                {% if selected_month == "12" %}selected{% endif %}>
+                December
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="filter-group">
+
+        <label for="year">Year</label>
+
+        <select name="year" id="year">
+
+            <option value="">All Years</option>
+
+            <option value="2026"
+                {% if selected_year == "2026" %}selected{% endif %}>
+                2026
+            </option>
+
+            <option value="2027"
+                {% if selected_year == "2027" %}selected{% endif %}>
+                2027
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <button type="submit" class="report-filter-btn">
+        Apply Filter
+    </button>
+
+</form>
+
+
+<!-- ========================= -->
+<!-- SUMMARY CARDS -->
+<!-- ========================= -->
+
+<div class="report-summary">
+
+    <div class="report-card income-card">
+
+        <span class="report-card-label">
+            Total Income
+        </span>
+
+        <h2>
+            ₹{{ total_income }}
+        </h2>
+
+    </div>
+
+
+    <div class="report-card expense-card">
+
+        <span class="report-card-label">
+            Total Expenses
+        </span>
+
+        <h2>
+            ₹{{ total_expenses }}
+        </h2>
+
+    </div>
+
+
+    <div class="report-card savings-card">
+
+        <span class="report-card-label">
+            Savings
+        </span>
+
+        <h2>
+            ₹{{ savings }}
+        </h2>
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- EXPENSE BY CATEGORY -->
+<!-- ========================= -->
+
+<div class="category-report">
+
+    <div class="report-section-header">
+
+        <div>
+            <h2>Expense by Category</h2>
+            <p>See where your money is being spent.</p>
+        </div>
+
+    </div>
+
+
+    <div class="category-list">
+
+        {% for item in category_data %}
+
+            <div class="category-row">
+
+                <div class="category-name">
+
+                    <span class="category-dot"></span>
+
+                    <span>
+                        {{ item.category__name }}
+                    </span>
+
+                </div>
+
+                <strong>
+                    ₹{{ item.total }}
+                </strong>
+
+            </div>
+
+        {% empty %}
+
+            <div class="empty-report">
+                <p>No expenses found for this period.</p>
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- SPENDING DISTRIBUTION -->
+<!-- ========================= -->
+
+<div class="report-chart-card">
+
+    <div class="report-section-header">
+
+        <div>
+            <h2>Spending Distribution</h2>
+            <p>Breakdown of your expenses by category.</p>
+        </div>
+
+    </div>
+
+
+    <div class="report-chart-container">
+
+        {% if category_data %}
+            <canvas id="expenseCategoryChart"></canvas>
+        {% else %}
+            <div class="chart-empty">
+                <p>No expense data available.</p>
+            </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- MONTHLY INCOME VS EXPENSES -->
+<!-- ========================= -->
+
+<div class="report-chart-card monthly-chart-card">
+
+    <div class="report-section-header">
+
+        <div>
+            <h2>Income vs Expenses</h2>
+            <p>Track your financial activity throughout the year.</p>
+        </div>
+
+    </div>
+
+
+    <div class="monthly-chart-container">
+
+        <canvas id="monthlyFinancialChart"></canvas>
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- DJANGO DATA FOR JAVASCRIPT -->
+<!-- ========================= -->
+
+{{ category_labels|json_script:"category-labels" }}
+
+{{ category_amounts|json_script:"category-amounts" }}
+
+{{ monthly_income|json_script:"monthly-income" }}
+
+{{ monthly_expenses|json_script:"monthly-expenses" }}
+
+
+<!-- ========================= -->
+<!-- CHART.JS -->
+<!-- ========================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<!-- ========================= -->
+<!-- CATEGORY DOUGHNUT CHART -->
+<!-- ========================= -->
+
+<script>
+
+    const categoryLabels = JSON.parse(
+        document.getElementById('category-labels').textContent
+    );
+
+    const categoryAmounts = JSON.parse(
+        document.getElementById('category-amounts').textContent
+    );
+
+
+    const categoryCanvas = document.getElementById(
+        'expenseCategoryChart'
+    );
+
+
+    if (
+        categoryCanvas &&
+        categoryLabels.length > 0
+    ) {
+
+        new Chart(categoryCanvas, {
+
+            type: 'doughnut',
+
+            data: {
+
+                labels: categoryLabels,
+
+                datasets: [
+
+                    {
+
+                        data: categoryAmounts,
+
+                        backgroundColor: [
+
+                            '#234236',
+                            '#8FB5A3',
+                            '#D8A48F',
+                            '#6C8A7B',
+                            '#B8C9C0',
+                            '#A67C52'
+
+                        ],
+
+                        borderWidth: 0,
+
+                        hoverOffset: 6
+
+                    }
+
+                ]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                cutout: '65%',
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            padding: 20,
+
+                            usePointStyle: true,
+
+                            pointStyle: 'circle'
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+
+    }
+
+</script>
+
+
+<!-- ========================= -->
+<!-- MONTHLY BAR CHART -->
+<!-- ========================= -->
+
+<script>
+
+    const monthlyIncome = JSON.parse(
+        document.getElementById('monthly-income').textContent
+    );
+
+    const monthlyExpenses = JSON.parse(
+        document.getElementById('monthly-expenses').textContent
+    );
+
+
+    const monthlyCanvas = document.getElementById(
+        'monthlyFinancialChart'
+    );
+
+
+    if (monthlyCanvas) {
+
+        new Chart(monthlyCanvas, {
+
+            type: 'bar',
+
+            data: {
+
+                labels: [
+
+                    'Jan',
+                    'Feb',
+                    'Mar',
+                    'Apr',
+                    'May',
+                    'Jun',
+                    'Jul',
+                    'Aug',
+                    'Sep',
+                    'Oct',
+                    'Nov',
+                    'Dec'
+
+                ],
+
+                datasets: [
+
+                    {
+
+                        label: 'Income',
+
+                        data: monthlyIncome,
+
+                        backgroundColor: '#234236',
+
+                        borderRadius: 6,
+
+                        borderSkipped: false
+
+                    },
+
+                    {
+
+                        label: 'Expenses',
+
+                        data: monthlyExpenses,
+
+                        backgroundColor: '#D8A48F',
+
+                        borderRadius: 6,
+
+                        borderSkipped: false
+
+                    }
+
+                ]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                interaction: {
+
+                    mode: 'index',
+
+                    intersect: false
+
+                },
+
+
+                scales: {
+
+                    x: {
+
+                        grid: {
+
+                            display: false
+
+                        }
+
+                    },
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            callback: function(value) {
+
+                                return '₹' + value.toLocaleString();
+
+                            }
+
+                        }
+
+                    }
+
+                },
+
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            padding: 20,
+
+                            usePointStyle: true,
+
+                            pointStyle: 'circle'
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            label: function(context) {
+
+                                return context.dataset.label +
+                                    ': ₹' +
+                                    Number(
+                                        context.raw
+                                    ).toLocaleString();
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+
+    }
+
+</script>
+
+
+{% endblock %}

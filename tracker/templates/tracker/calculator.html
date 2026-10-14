@@ -1,0 +1,770 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="calculator-page">
+
+    <div class="calculator-header">
+        <div>
+            <h1>Quick Transaction Calculator</h1>
+            <p>
+                Calculate amounts and add multiple income or expense
+                entries at once.
+            </p>
+        </div>
+    </div>
+
+
+    <form method="POST" id="transactionForm">
+
+        {% csrf_token %}
+
+        <div class="calculator-layout">
+
+            <!-- CALCULATOR -->
+            <div class="calculator-card">
+
+                <div class="calculator-display">
+                    <span>₹</span>
+                    <input
+                        type="text"
+                        id="display"
+                        value="0"
+                        readonly
+                    >
+                </div>
+
+                <div class="calculator-keypad">
+
+                    <button type="button" onclick="press('7')">7</button>
+                    <button type="button" onclick="press('8')">8</button>
+                    <button type="button" onclick="press('9')">9</button>
+                    <button type="button" class="operator" onclick="press('/')">÷</button>
+
+                    <button type="button" onclick="press('4')">4</button>
+                    <button type="button" onclick="press('5')">5</button>
+                    <button type="button" onclick="press('6')">6</button>
+                    <button type="button" class="operator" onclick="press('*')">×</button>
+
+                    <button type="button" onclick="press('1')">1</button>
+                    <button type="button" onclick="press('2')">2</button>
+                    <button type="button" onclick="press('3')">3</button>
+                    <button type="button" class="operator" onclick="press('-')">−</button>
+
+                    <button type="button" onclick="press('0')">0</button>
+                    <button type="button" onclick="press('.')">.</button>
+                    <button type="button" class="clear" onclick="clearCalculator()">C</button>
+                    <button type="button" class="operator" onclick="press('+')">+</button>
+
+                    <button
+                        type="button"
+                        class="delete-key"
+                        onclick="deleteLast()"
+                    >
+                        ⌫
+                    </button>
+
+                    <button
+                        type="button"
+                        class="equals"
+                        onclick="calculate()"
+                    >
+                        =
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- TRANSACTION ENTRY -->
+            <div class="transaction-entry-card">
+
+                <div class="section-title">
+                    <h2>Add Entry</h2>
+                    <p>Turn your calculated amount into a transaction.</p>
+                </div>
+
+
+                <div class="transaction-type">
+
+                    <label class="type-option credit-option">
+                        <input
+                            type="radio"
+                            name="current_type"
+                            value="CREDIT"
+                            checked
+                        >
+                        <span>＋ Credit</span>
+                    </label>
+
+                    <label class="type-option debit-option">
+                        <input
+                            type="radio"
+                            name="current_type"
+                            value="DEBIT"
+                        >
+                        <span>− Debit</span>
+                    </label>
+
+                </div>
+
+
+                <div class="entry-field">
+
+                    <label>Category</label>
+
+                    <select id="categorySelect">
+
+                        <option value="">
+                            Select category
+                        </option>
+
+                        {% for category in categories %}
+
+                        <option value="{{ category.id }}">
+                            {{ category.name }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="entry-field">
+
+                    <label>Description</label>
+
+                    <input
+                        type="text"
+                        id="descriptionInput"
+                        placeholder="e.g. Grocery shopping"
+                    >
+
+                </div>
+
+
+                <div class="entry-field">
+
+                    <label>Date</label>
+
+                    <input
+                        type="date"
+                        id="dateInput"
+                    >
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="add-entry-btn"
+                    onclick="addEntry()"
+                >
+                    + Add to List
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ENTRY LIST -->
+
+        <div class="entries-card">
+
+            <div class="entries-header">
+
+                <div>
+                    <h2>Quick Entries</h2>
+                    <p>
+                        Review your entries before saving them.
+                    </p>
+                </div>
+
+                <span id="entryCount">
+                    0 entries
+                </span>
+
+            </div>
+
+
+            <div id="entriesList" class="entries-list">
+
+                <div class="empty-entries">
+                    <div class="empty-icon">＋</div>
+
+                    <h3>No entries yet</h3>
+
+                    <p>
+                        Calculate an amount and add it to your list.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- SUMMARY -->
+
+            <div class="transaction-summary">
+
+                <div class="summary-item credit-summary">
+
+                    <span>Total Credit</span>
+
+                    <strong id="totalCredit">
+                        ₹0.00
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-item debit-summary">
+
+                    <span>Total Debit</span>
+
+                    <strong id="totalDebit">
+                        ₹0.00
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-item net-summary">
+
+                    <span>Net</span>
+
+                    <strong id="netAmount">
+                        ₹0.00
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="save-transactions-btn"
+                id="saveTransactionsBtn"
+                disabled
+            >
+                Add All as Transactions
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script>
+
+let display = document.getElementById("display");
+
+let expression = "";
+
+let entries = [];
+
+
+// -----------------------------
+// TODAY'S DATE
+// -----------------------------
+
+const dateInput = document.getElementById("dateInput");
+
+const today = new Date();
+
+const year = today.getFullYear();
+
+const month = String(today.getMonth() + 1).padStart(2, "0");
+
+const day = String(today.getDate()).padStart(2, "0");
+
+dateInput.value = `${year}-${month}-${day}`;
+
+
+// -----------------------------
+// CALCULATOR
+// -----------------------------
+
+function press(value) {
+
+    if (expression === "0") {
+        expression = "";
+    }
+
+    expression += value;
+
+    display.value = expression;
+}
+
+
+function clearCalculator() {
+
+    expression = "";
+
+    display.value = "0";
+}
+
+
+function deleteLast() {
+
+    expression = expression.slice(0, -1);
+
+    display.value = expression || "0";
+}
+
+
+function calculate() {
+
+    if (!expression) {
+        return;
+    }
+
+    try {
+
+        /*
+         * Only allow calculator characters.
+         * This prevents arbitrary JavaScript execution.
+         */
+
+        if (!/^[0-9+\-*/.() ]+$/.test(expression)) {
+            return;
+        }
+
+        const result = Function(
+            '"use strict"; return (' + expression + ')'
+        )();
+
+        if (!Number.isFinite(result)) {
+            display.value = "Error";
+            expression = "";
+            return;
+        }
+
+        const rounded = Math.round(result * 100) / 100;
+
+        expression = String(rounded);
+
+        display.value = rounded;
+
+    } catch {
+
+        display.value = "Error";
+
+        expression = "";
+
+    }
+
+}
+
+
+// -----------------------------
+// ADD ENTRY
+// -----------------------------
+
+function addEntry() {
+
+    const amount = parseFloat(display.value);
+
+    const type = document.querySelector(
+        'input[name="current_type"]:checked'
+    ).value;
+
+    const category = document.getElementById(
+        "categorySelect"
+    ).value;
+
+    const categoryText = document.getElementById(
+        "categorySelect"
+    ).selectedOptions[0]?.text || "";
+
+    const description = document.getElementById(
+        "descriptionInput"
+    ).value.trim();
+
+    const date = document.getElementById(
+        "dateInput"
+    ).value;
+
+
+    if (!amount || amount <= 0 || display.value === "Error") {
+
+        alert("Please calculate a valid amount first.");
+
+        return;
+    }
+
+
+    if (!category) {
+
+        alert("Please select a category.");
+
+        return;
+    }
+
+
+    if (!date) {
+
+        alert("Please select a date.");
+
+        return;
+    }
+
+
+    entries.push({
+
+        amount: amount,
+
+        type: type,
+
+        category: category,
+
+        categoryText: categoryText,
+
+        description: description || "Quick transaction",
+
+        date: date
+
+    });
+
+
+    renderEntries();
+
+
+    // Reset calculator
+
+    clearCalculator();
+
+    document.getElementById(
+        "descriptionInput"
+    ).value = "";
+
+}
+
+
+// -----------------------------
+// REMOVE ENTRY
+// -----------------------------
+
+function removeEntry(index) {
+
+    entries.splice(index, 1);
+
+    renderEntries();
+
+}
+
+
+// -----------------------------
+// RENDER ENTRIES
+// -----------------------------
+
+function renderEntries() {
+
+    const list = document.getElementById(
+        "entriesList"
+    );
+
+    const count = document.getElementById(
+        "entryCount"
+    );
+
+    const saveButton = document.getElementById(
+        "saveTransactionsBtn"
+    );
+
+
+    if (entries.length === 0) {
+
+        list.innerHTML = `
+
+            <div class="empty-entries">
+
+                <div class="empty-icon">＋</div>
+
+                <h3>No entries yet</h3>
+
+                <p>
+                    Calculate an amount and add it to your list.
+                </p>
+
+            </div>
+
+        `;
+
+        count.textContent = "0 entries";
+
+        saveButton.disabled = true;
+
+        updateSummary();
+
+        return;
+    }
+
+
+    count.textContent =
+        `${entries.length} ${
+            entries.length === 1 ? "entry" : "entries"
+        }`;
+
+
+    saveButton.disabled = false;
+
+
+    list.innerHTML = "";
+
+
+    entries.forEach((entry, index) => {
+
+        const row = document.createElement("div");
+
+        row.className = "entry-row";
+
+
+        const sign =
+            entry.type === "CREDIT"
+                ? "+"
+                : "−";
+
+
+        row.innerHTML = `
+
+            <div class="entry-type-icon ${
+                entry.type === "CREDIT"
+                    ? "credit-icon"
+                    : "debit-icon"
+            }">
+                ${sign}
+            </div>
+
+
+            <div class="entry-main">
+
+                <strong>
+                    ${escapeHtml(entry.description)}
+                </strong>
+
+                <span>
+                    ${escapeHtml(entry.categoryText)}
+                    · ${entry.date}
+                </span>
+
+            </div>
+
+
+            <div class="entry-amount ${
+                entry.type === "CREDIT"
+                    ? "credit-text"
+                    : "debit-text"
+            }">
+
+                ${sign} ₹${entry.amount.toFixed(2)}
+
+            </div>
+
+
+            <button
+                type="button"
+                class="remove-entry"
+                onclick="removeEntry(${index})"
+                title="Remove entry"
+            >
+                ×
+            </button>
+
+        `;
+
+
+        list.appendChild(row);
+
+    });
+
+
+    updateSummary();
+
+}
+
+
+// -----------------------------
+// SUMMARY
+// -----------------------------
+
+function updateSummary() {
+
+    let credit = 0;
+
+    let debit = 0;
+
+
+    entries.forEach(entry => {
+
+        if (entry.type === "CREDIT") {
+
+            credit += entry.amount;
+
+        } else {
+
+            debit += entry.amount;
+
+        }
+
+    });
+
+
+    const net = credit - debit;
+
+
+    document.getElementById(
+        "totalCredit"
+    ).textContent =
+        "₹" + credit.toFixed(2);
+
+
+    document.getElementById(
+        "totalDebit"
+    ).textContent =
+        "₹" + debit.toFixed(2);
+
+
+    document.getElementById(
+        "netAmount"
+    ).textContent =
+        "₹" + net.toFixed(2);
+
+
+    document.getElementById(
+        "netAmount"
+    ).className =
+        net >= 0
+            ? "positive-net"
+            : "negative-net";
+
+
+    syncFormFields();
+
+}
+
+
+// -----------------------------
+// CREATE HIDDEN FORM FIELDS
+// -----------------------------
+
+function syncFormFields() {
+
+    const form =
+        document.getElementById(
+            "transactionForm"
+        );
+
+
+    document.querySelectorAll(
+        ".generated-field"
+    ).forEach(field => field.remove());
+
+
+    entries.forEach(entry => {
+
+        createHiddenField(
+            form,
+            "amount[]",
+            entry.amount
+        );
+
+        createHiddenField(
+            form,
+            "transaction_type[]",
+            entry.type
+        );
+
+        createHiddenField(
+            form,
+            "category[]",
+            entry.category
+        );
+
+        createHiddenField(
+            form,
+            "description[]",
+            entry.description
+        );
+
+        createHiddenField(
+            form,
+            "date[]",
+            entry.date
+        );
+
+    });
+
+}
+
+
+function createHiddenField(
+    form,
+    name,
+    value
+) {
+
+    const input =
+        document.createElement("input");
+
+    input.type = "hidden";
+
+    input.name = name;
+
+    input.value = value;
+
+    input.className = "generated-field";
+
+    form.appendChild(input);
+
+}
+
+
+// -----------------------------
+// HTML ESCAPE
+// -----------------------------
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// -----------------------------
+// PREVENT EMPTY SUBMISSION
+// -----------------------------
+
+document.getElementById(
+    "transactionForm"
+).addEventListener(
+    "submit",
+    function(event) {
+
+        if (entries.length === 0) {
+
+            event.preventDefault();
+
+            alert(
+                "Please add at least one transaction."
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+{% endblock %}

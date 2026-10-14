@@ -1,0 +1,175 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{% static 'tracker/style.css' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <title>SpendWise</title>
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     NAVBAR
+===================================================== -->
+
+<nav class="navbar">
+
+    <div class="navbar-container">
+
+        <!-- Logo -->
+        <div class="navbar-brand">
+            SpendWise
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button
+            class="navbar-toggle"
+            type="button"
+            onclick="toggleNavbar()"
+            aria-label="Toggle navigation"
+        >
+            ☰
+        </button>
+
+        <!-- Navigation -->
+        <div class="navbar-menu" id="navbarMenu">
+
+            <div class="navbar-links">
+
+                <a href="{% url 'dashboard' %}">
+                    Dashboard
+                </a>
+
+                <a href="{% url 'transactions' %}">
+                    Transactions
+                </a>
+
+                <a href="{% url 'categories' %}">
+                    Categories
+                </a>
+
+                <a href="{% url 'budget' %}">
+                    Budget
+                </a>
+
+                <a href="{% url 'savings_goals' %}">
+                    Savings
+                </a>
+
+                <a href="{% url 'loans' %}">
+                    Loans
+                </a>
+
+                <a href="{% url 'reports' %}">
+                    Reports
+                </a>
+
+                <a href="{% url 'calculator' %}">
+                    Calculator
+                </a>
+
+            </div>
+
+            {% if user.is_authenticated %}
+
+            <div class="navbar-user">
+
+                <a
+                    href="{% url 'account' %}"
+                    class="navbar-account"
+                >
+                    Account
+                </a>
+
+                <a
+                    href="{% url 'logout' %}"
+                    class="navbar-logout"
+                >
+                    Logout
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</nav>
+
+
+<!-- =====================================================
+     PAGE CONTENT
+===================================================== -->
+
+<main>
+    {% block content %}
+    {% endblock %}
+</main>
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer class="footer">
+
+    <h3>SpendWise</h3>
+
+    <p>
+        Manage your money smarter.
+        Track income, expenses and your financial journey.
+    </p>
+
+    <div class="footer-links">
+
+        <a href="{% url 'dashboard' %}">
+            Dashboard
+        </a>
+
+        <a href="{% url 'about' %}">
+            About
+        </a>
+
+    </div>
+
+    <p class="support">
+        Support: nayanvinu0369@gmail.com
+    </p>
+
+    <p class="copyright">
+        © 2026 SpendWise. All rights reserved.
+    </p>
+
+</footer>
+
+<script>
+
+function toggleNavbar() {
+
+    const menu = document.getElementById("navbarMenu");
+
+    menu.classList.toggle("active");
+
+}
+
+</script>
+</body>
+</html>

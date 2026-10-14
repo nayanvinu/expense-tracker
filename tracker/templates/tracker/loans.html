@@ -1,0 +1,884 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="loans-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+         ===================================================== -->
+
+    <div class="loans-header">
+
+        <div>
+            <h1>Loans</h1>
+
+            <p>
+                Track money you borrowed, lent, and repayments.
+            </p>
+        </div>
+
+        <a href="#add-loan" class="add-loan-btn">
+            + Add Loan
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         SUMMARY
+         ===================================================== -->
+
+    <div class="loan-summary-grid">
+
+        <div class="loan-summary-card">
+
+            <span class="loan-summary-label">
+                Money Borrowed
+            </span>
+
+            <strong>
+                ₹{{ total_borrowed|floatformat:2 }}
+            </strong>
+
+        </div>
+
+
+        <div class="loan-summary-card">
+
+            <span class="loan-summary-label">
+                Money Lent
+            </span>
+
+            <strong>
+                ₹{{ total_lent|floatformat:2 }}
+            </strong>
+
+        </div>
+
+
+        <div class="loan-summary-card">
+
+            <span class="loan-summary-label">
+                Pending
+            </span>
+
+            <strong>
+                ₹{{ total_pending|floatformat:2 }}
+            </strong>
+
+        </div>
+
+
+        <div class="loan-summary-card">
+
+            <span class="loan-summary-label">
+                Total Paid
+            </span>
+
+            <strong>
+                ₹{{ total_paid|floatformat:2 }}
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ADD LOAN
+         ===================================================== -->
+
+    <div
+        class="loan-create-card"
+        id="add-loan"
+    >
+
+        <div class="loan-create-header">
+
+            <span class="loan-eyebrow">
+                MONEY MANAGEMENT
+            </span>
+
+            <h2>
+                Add a Loan
+            </h2>
+
+            <p>
+                Record money you borrowed or lent to someone.
+            </p>
+
+        </div>
+
+
+        <form
+            method="POST"
+            class="loan-form"
+        >
+
+            {% csrf_token %}
+
+
+            <div class="loan-form-grid">
+
+                <!-- PERSON -->
+
+                <div class="loan-field">
+
+                    <label for="person_name">
+                        Person Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="person_name"
+                        name="person_name"
+                        placeholder="e.g. Rahul"
+                        maxlength="100"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- AMOUNT -->
+
+                <div class="loan-field loan-amount-field">
+
+    <label for="loan-amount">
+        Total Loan Amount
+    </label>
+
+    <div class="loan-money-input-wrapper">
+
+        <span class="loan-currency">₹</span>
+
+        <input
+            type="number"
+            id="loan-amount"
+            name="amount"
+            placeholder="0.00"
+            step="0.01"
+            min="0.01"
+            required
+        >
+
+    </div>
+
+</div>
+
+
+                <!-- TYPE -->
+
+                <div class="loan-field">
+
+                    <label for="loan_type">
+                        Loan Type
+                    </label>
+
+                    <select
+                        id="loan_type"
+                        name="loan_type"
+                        required
+                    >
+
+                        <option value="BORROWED">
+                            Borrowed
+                        </option>
+
+                        <option value="LENT">
+                            Lent
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- DUE DATE -->
+
+                <div class="loan-field">
+
+                    <label for="due_date">
+                        Due Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="due_date"
+                        name="due_date"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="loan-field loan-description-field">
+
+                <label for="description">
+                    Description
+                    <span>(optional)</span>
+                </label>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="3"
+                    placeholder="Add a note about this loan..."
+                ></textarea>
+
+            </div>
+
+
+            <!-- CREATE BUTTON -->
+
+            <div class="loan-form-action">
+
+                <button
+                    type="submit"
+                    class="create-loan-btn"
+                >
+                    + Create Loan
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTERS / SEARCH
+         ===================================================== -->
+
+    <div class="loan-filter-card">
+
+        <div class="loan-filter-header">
+
+            <div>
+
+                <h2>
+                    Loan Records
+                </h2>
+
+                <p>
+                    Search and filter your loans.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- SEARCH -->
+
+        <form
+            method="GET"
+            class="loan-search-form"
+        >
+
+            <div class="loan-search-input">
+
+                <span>⌕</span>
+
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search_query }}"
+                    placeholder="Search person or description..."
+                >
+
+            </div>
+
+
+            {% if selected_filter != 'ALL' %}
+
+                <input
+                    type="hidden"
+                    name="filter"
+                    value="{{ selected_filter }}"
+                >
+
+            {% endif %}
+
+
+            <button
+                type="submit"
+                class="loan-search-btn"
+            >
+                Search
+            </button>
+
+
+            {% if search_query %}
+
+                <a
+                    href="{% url 'loans' %}{% if selected_filter != 'ALL' %}?filter={{ selected_filter }}{% endif %}"
+                    class="loan-clear-search"
+                >
+                    Clear
+                </a>
+
+            {% endif %}
+
+        </form>
+
+
+        <!-- FILTER BUTTONS -->
+
+        <div class="loan-filter-buttons">
+
+            <a
+                href="{% url 'loans' %}{% if search_query %}?search={{ search_query|urlencode }}{% endif %}"
+                class="loan-filter-btn {% if selected_filter == 'ALL' %}active{% endif %}"
+            >
+                All
+            </a>
+
+
+            <a
+                href="{% url 'loans' %}?filter=BORROWED{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
+                class="loan-filter-btn {% if selected_filter == 'BORROWED' %}active{% endif %}"
+            >
+                Borrowed
+            </a>
+
+
+            <a
+                href="{% url 'loans' %}?filter=LENT{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
+                class="loan-filter-btn {% if selected_filter == 'LENT' %}active{% endif %}"
+            >
+                Lent
+            </a>
+
+
+            <a
+                href="{% url 'loans' %}?filter=PENDING{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
+                class="loan-filter-btn {% if selected_filter == 'PENDING' %}active{% endif %}"
+            >
+                Pending
+            </a>
+
+
+            <a
+                href="{% url 'loans' %}?filter=PAID{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
+                class="loan-filter-btn {% if selected_filter == 'PAID' %}active{% endif %}"
+            >
+                Paid
+            </a>
+
+
+            <a
+                href="{% url 'loans' %}?filter=OVERDUE{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
+                class="loan-filter-btn {% if selected_filter == 'OVERDUE' %}active{% endif %}"
+            >
+                Overdue
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         LOAN LIST
+         ===================================================== -->
+
+    {% if loan_data %}
+
+        <div class="loan-list">
+
+            {% for item in loan_data %}
+
+                <div class="loan-card">
+
+                    <!-- HEADER -->
+
+                    <div class="loan-card-header">
+
+                        <div class="loan-person">
+
+                            <div class="loan-person-icon">
+                                💰
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    {{ item.loan.person_name }}
+                                </h3>
+
+                                <span>
+                                    {% if item.loan.loan_type == "BORROWED" %}
+                                        Borrowed
+                                    {% else %}
+                                        Lent
+                                    {% endif %}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="loan-status">
+
+                            {% if item.loan.status == "PAID" %}
+
+                                <span class="loan-status-paid">
+                                    ✓ Paid
+                                </span>
+
+                            {% else %}
+
+                                <span class="loan-status-pending">
+                                    Pending
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- AMOUNTS -->
+
+                    <div class="loan-amount-section">
+
+                        <div class="loan-amount-item">
+
+                            <span>
+                                Total Amount
+                            </span>
+
+                            <strong>
+                                ₹{{ item.loan.amount|floatformat:2 }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="loan-amount-item">
+
+                            <span>
+                                Paid
+                            </span>
+
+                            <strong>
+                                ₹{{ item.loan.paid_amount|floatformat:2 }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="loan-amount-item">
+
+                            <span>
+                                Remaining
+                            </span>
+
+                            <strong>
+                                ₹{{ item.loan.remaining_amount|floatformat:2 }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PROGRESS -->
+
+                    <div class="loan-progress-section">
+
+                        <div class="loan-progress-header">
+
+                            <span>
+                                Repayment Progress
+                            </span>
+
+                            {% if item.loan.amount > 0 %}
+
+                                <strong>
+                                    {% widthratio item.loan.paid_amount item.loan.amount 100 %}%
+                                </strong>
+
+                            {% else %}
+
+                                <strong>
+                                    0%
+                                </strong>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div class="loan-progress">
+
+                            {% if item.loan.amount > 0 %}
+
+                                <div
+                                    class="loan-progress-bar"
+                                    data-paid="{{ item.loan.paid_amount }}"
+                                    data-total="{{ item.loan.amount }}"
+                                ></div>
+
+                            {% else %}
+
+                                <div
+                                    class="loan-progress-bar"
+                                    data-paid="0"
+                                    data-total="1"
+                                ></div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DUE DATE -->
+
+                    {% if item.due_status %}
+
+                        <div class="loan-due-status {{ item.due_class }}">
+
+                            <span>
+                                📅
+                            </span>
+
+                            <span>
+                                {{ item.due_status }}
+                            </span>
+
+                        </div>
+
+                    {% elif item.loan.due_date %}
+
+                        <div class="loan-due-status due-normal">
+
+                            <span>
+                                📅
+                            </span>
+
+                            <span>
+                                Due:
+                                {{ item.loan.due_date|date:"d M Y" }}
+                            </span>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- DESCRIPTION -->
+
+                    {% if item.loan.description %}
+
+                        <div class="loan-description">
+
+                            <span>
+                                Note
+                            </span>
+
+                            <p>
+                                {{ item.loan.description }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- ACTIONS -->
+
+                    {% if item.loan.status == "PENDING" %}
+
+                        <div class="loan-actions">
+
+    <!-- Payment -->
+    <form
+        method="POST"
+        action="{% url 'add_loan_payment' item.loan.id %}"
+        class="loan-payment-form"
+        style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            width:auto;
+            max-width:none;
+            margin:0;
+            padding:0;
+            background:transparent;
+            border:none;
+            box-shadow:none;
+        "
+    >
+
+        {% csrf_token %}
+
+        <input
+            type="number"
+            name="amount"
+            class="loan-payment-input"
+            placeholder="Payment amount"
+            step="0.01"
+            min="0.01"
+            required
+            style="
+                width:150px;
+                height:38px;
+                margin:0;
+                padding:0 10px;
+                border:1px solid #dfe4df;
+                border-radius:8px;
+                background:#ffffff;
+                box-sizing:border-box;
+            "
+        >
+
+        <button
+            type="submit"
+            class="loan-payment-btn"
+            style="
+                width:auto;
+                min-width:105px;
+                height:38px;
+                margin:0;
+                padding:0 14px;
+                border:none;
+                border-radius:8px;
+                background:#315f4e;
+                color:#ffffff;
+                font-size:11px;
+                font-weight:700;
+                cursor:pointer;
+                white-space:nowrap;
+            "
+        >
+            Add Payment
+        </button>
+
+    </form>
+
+
+    <!-- Edit -->
+    <a
+        href="{% url 'edit_loan' item.loan.id %}"
+        class="loan-edit-btn"
+        style="
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:70px;
+            height:38px;
+            margin:0 0 0 auto;
+            padding:0 12px;
+            border:1px solid #dfe4df;
+            border-radius:8px;
+            background:#ffffff;
+            color:#33453d;
+            font-size:11px;
+            font-weight:600;
+            text-decoration:none;
+            box-sizing:border-box;
+        "
+    >
+        Edit
+    </a>
+
+
+    <!-- Delete -->
+    <form
+        method="POST"
+        action="{% url 'delete_loan' item.loan.id %}"
+        class="loan-delete-form"
+        style="
+            display:block;
+            width:auto;
+            max-width:none;
+            margin:0;
+            padding:0;
+            background:transparent;
+            border:none;
+            box-shadow:none;
+        "
+    >
+
+        {% csrf_token %}
+
+        <button
+            type="submit"
+            class="loan-delete-btn"
+            onclick="return confirm('Delete this loan?');"
+            style="
+                width:70px;
+                height:38px;
+                margin:0;
+                padding:0 12px;
+                border:1px solid #ead8d1;
+                border-radius:8px;
+                background:#ffffff;
+                color:#a5664f;
+                font-size:11px;
+                font-weight:600;
+                cursor:pointer;
+                box-sizing:border-box;
+            "
+        >
+            Delete
+        </button>
+
+    </form>
+
+</div>
+
+
+                    {% else %}
+
+                        <div class="loan-paid-message">
+
+                            <span>
+                                ✓
+                            </span>
+
+                            <p>
+                                This loan has been fully paid.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+    {% else %}
+
+        <!-- EMPTY STATE -->
+
+        <div class="loan-empty">
+
+            <div class="loan-empty-icon">
+                💰
+            </div>
+
+            <h3>
+                No loans found
+            </h3>
+
+            {% if search_query %}
+
+                <p>
+                    No loans matched
+                    "{{ search_query }}".
+                </p>
+
+                <a
+                    href="{% url 'loans' %}"
+                    class="loan-empty-btn"
+                >
+                    Clear Search
+                </a>
+
+            {% elif selected_filter != 'ALL' %}
+
+                <p>
+                    There are no loans in this category.
+                </p>
+
+                <a
+                    href="{% url 'loans' %}"
+                    class="loan-empty-btn"
+                >
+                    View All Loans
+                </a>
+
+            {% else %}
+
+                <p>
+                    Add your first loan to start tracking
+                    money borrowed or lent.
+                </p>
+
+                <a
+                    href="#add-loan"
+                    class="loan-empty-btn"
+                >
+                    + Add Loan
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =========================================================
+     LOAN PROGRESS SCRIPT
+     ========================================================= -->
+
+<script>
+
+    const loanProgressBars =
+        document.querySelectorAll(
+            ".loan-progress-bar"
+        );
+
+
+    loanProgressBars.forEach(function (bar) {
+
+        const paid =
+            parseFloat(
+                bar.dataset.paid
+            ) || 0;
+
+
+        const total =
+            parseFloat(
+                bar.dataset.total
+            ) || 0;
+
+
+        let percentage = 0;
+
+
+        if (total > 0) {
+
+            percentage =
+                (paid / total) * 100;
+
+        }
+
+
+        percentage =
+            Math.min(
+                Math.max(
+                    percentage,
+                    0
+                ),
+                100
+            );
+
+
+        bar.style.width =
+            percentage + "%";
+
+    });
+
+</script>
+
+{% endblock %}

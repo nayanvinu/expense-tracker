@@ -1,0 +1,374 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+
+<div class="budget-page">
+
+    <!-- Page Header -->
+    <div class="page-header">
+
+        <div>
+            <h1>Budget</h1>
+
+            <p>
+                Plan your spending and stay in control of your finances.
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- Month / Year Filter -->
+    <form method="GET" class="budget-filter">
+
+        <div class="budget-filter-group">
+
+            <label for="month">
+                Month
+            </label>
+
+            <select name="month" id="month">
+
+                <option value="1"
+                    {% if selected_month == "1" %}selected{% endif %}>
+                    January
+                </option>
+
+                <option value="2"
+                    {% if selected_month == "2" %}selected{% endif %}>
+                    February
+                </option>
+
+                <option value="3"
+                    {% if selected_month == "3" %}selected{% endif %}>
+                    March
+                </option>
+
+                <option value="4"
+                    {% if selected_month == "4" %}selected{% endif %}>
+                    April
+                </option>
+
+                <option value="5"
+                    {% if selected_month == "5" %}selected{% endif %}>
+                    May
+                </option>
+
+                <option value="6"
+                    {% if selected_month == "6" %}selected{% endif %}>
+                    June
+                </option>
+
+                <option value="7"
+                    {% if selected_month == "7" %}selected{% endif %}>
+                    July
+                </option>
+
+                <option value="8"
+                    {% if selected_month == "8" %}selected{% endif %}>
+                    August
+                </option>
+
+                <option value="9"
+                    {% if selected_month == "9" %}selected{% endif %}>
+                    September
+                </option>
+
+                <option value="10"
+                    {% if selected_month == "10" %}selected{% endif %}>
+                    October
+                </option>
+
+                <option value="11"
+                    {% if selected_month == "11" %}selected{% endif %}>
+                    November
+                </option>
+
+                <option value="12"
+                    {% if selected_month == "12" %}selected{% endif %}>
+                    December
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="budget-filter-group">
+
+            <label for="year">
+                Year
+            </label>
+
+            <select name="year" id="year">
+
+                <option value="2026"
+                    {% if selected_year == "2026" %}selected{% endif %}>
+                    2026
+                </option>
+
+                <option value="2027"
+                    {% if selected_year == "2027" %}selected{% endif %}>
+                    2027
+                </option>
+
+                <option value="2028"
+                    {% if selected_year == "2028" %}selected{% endif %}>
+                    2028
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="budget-filter-btn">
+            View Budget
+        </button>
+
+    </form>
+
+
+    <!-- Main Budget Area -->
+    <div class="budget-layout">
+
+
+        <!-- Budget Setting Card -->
+        <div class="budget-setting-card">
+
+            <div class="budget-card-header">
+
+                <div>
+
+                    <span class="budget-label">
+                        Monthly Budget
+                    </span>
+
+                    <h2>
+                        ₹{{ budget_amount }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <form method="POST" class="budget-form">
+
+                {% csrf_token %}
+
+                <label for="amount">
+                    Set Budget Amount
+                </label>
+
+
+                <div class="budget-input-wrapper">
+
+                    <span>₹</span>
+
+                    <input
+                        type="number"
+                        name="amount"
+                        id="amount"
+                        step="0.01"
+                        min="0.01"
+                        value="{% if budget %}{{ budget_amount }}{% endif %}"
+                        placeholder="Enter budget amount"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="budget-save-btn">
+
+                    {% if budget %}
+                        Update Budget
+                    {% else %}
+                        Set Budget
+                    {% endif %}
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- Budget Status Card -->
+        <div class="budget-status-card">
+
+            <div class="budget-status-header">
+
+                <div>
+
+                    <span class="budget-label">
+                        Budget Status
+                    </span>
+
+
+                    {% if over_budget %}
+
+                        <span class="budget-status danger">
+                            Over Budget
+                        </span>
+
+                    {% else %}
+
+                        <span class="budget-status safe">
+                            On Track
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- Spending Information -->
+            <div class="budget-progress-info">
+
+                <div>
+
+                    <span>
+                        Spent
+                    </span>
+
+                    <strong>
+                        ₹{{ total_expenses }}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Budget
+                    </span>
+
+                    <strong>
+                        ₹{{ budget_amount }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Progress Bar -->
+            <div class="budget-progress">
+
+                <div
+                    class="budget-progress-bar
+                    {% if over_budget %}
+                        progress-danger
+                    {% endif %}"
+                    data-progress="{{ progress_percentage }}">
+                </div>
+
+            </div>
+
+
+            <!-- Percentage -->
+            <div class="budget-percentage">
+
+                {% if budget_amount > 0 %}
+
+                    <strong>
+                        {{ percentage_used }}%
+                    </strong>
+
+                    <span>
+                        of your budget used
+                    </span>
+
+                {% else %}
+
+                    <span>
+                        Set a budget to track your spending.
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- Remaining -->
+            <div class="budget-remaining">
+
+                {% if over_budget %}
+
+                    <span>
+                        Amount over budget
+                    </span>
+
+                    <strong class="danger-text">
+                        ₹{{ amount_over_budget }}
+                    </strong>
+
+                {% else %}
+
+                    <span>
+                        Remaining
+                    </span>
+
+                    <strong>
+                        ₹{{ remaining }}
+                    </strong>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Information Card -->
+    <div class="budget-info-card">
+
+        <div>
+
+            <h3>
+                Smart budgeting
+            </h3>
+
+            <p>
+                Your budget is calculated against your debit
+                transactions for the selected month.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Progress Bar JavaScript -->
+<script>
+
+    const progressBar =
+        document.querySelector('.budget-progress-bar');
+
+    if (progressBar) {
+
+        const progress =
+            parseFloat(
+                progressBar.dataset.progress
+            ) || 0;
+
+        progressBar.style.width =
+            Math.min(progress, 100) + '%';
+    }
+
+</script>
+
+{% endblock %}
